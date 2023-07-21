@@ -1,12 +1,28 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
-
+"""
+os.environ["WANDB_SILENT"] = "true"
+os.environ["WANDB_WATCH"] = "all"
+import wandb
+os.system("env WANDB_WATCH=all")
+# start a new wandb run to track this script
+wandb.init(
+    # set the wandb project where this run will be logged
+    project="huggingface",
+    
+    # track hyperparameters and run metadata
+    config={
+    "architecture": "LeviT",
+    "dataset": "Types_bothsides_20_unaugmented_80_10_10",
+    }
+)
+"""
 print("~~~loading dataset~~~")
 from datasets import load_dataset
 
 # load the custom dataset
-ds = load_dataset("imagefolder", data_dir="coins4")
+ds = load_dataset("imagefolder", data_dir="Datasets/coins_20_unaugmented_80_10_10")
 print(ds)
 
 
@@ -18,15 +34,15 @@ from tqdm import tqdm
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-from transformers import ViTModel, ViTImageProcessor, ViTForImageClassification
+from transformers import  BitImageProcessor, BitForImageClassification
 from transformers.modeling_outputs import SequenceClassifierOutput
 
-# the model name
-model_name = "google/vit-base-patch16-224"
+# the model name microsoft/cvt-21-384-22k
+model_name = "google/bit-50"
 # load the image processor
-image_processor = ViTImageProcessor.from_pretrained(model_name)
+image_processor =  BitImageProcessor.from_pretrained(model_name)
 # loading the pre-trained model
-model = ViTForImageClassification.from_pretrained(model_name)
+model = BitForImageClassification.from_pretrained(model_name)
 
 
 import urllib.parse as parse
@@ -106,8 +122,8 @@ def compute_metrics(eval_pred):
   return {**accuracy_score, **f1_score}
 
 print("~~~train model~~")
-# load the ViT model
-model = ViTForImageClassification.from_pretrained(
+# load the cvt model
+model = BitForImageClassification.from_pretrained(
     model_name,
     num_labels=len(labels),
     id2label={str(i): c for i, c in enumerate(labels)},
@@ -118,15 +134,15 @@ model = ViTForImageClassification.from_pretrained(
 from transformers import TrainingArguments
 
 training_args = TrainingArguments(
-  output_dir="./models", # output directory
+  output_dir="./models/2", # output directory
   # output_dir="./vit-base-skin-cancer",
   per_device_train_batch_size=8, # batch size per device during training
   evaluation_strategy="steps",    # evaluation strategy to adopt during training
-  num_train_epochs=50,             # total number of training epochs
+  num_train_epochs=15,             # total number of training epochs
   # fp16=True,                    # use mixed precision
-  save_steps=1000,                # number of update steps before saving checkpoint
-  eval_steps=1000,                # number of update steps before evaluating
-  logging_steps=1000,             # number of update steps before logging
+  save_steps=500,                # number of update steps before saving checkpoint
+  eval_steps=500,                # number of update steps before evaluating
+  logging_steps=500,             # number of update steps before logging
   # save_steps=50,
   # eval_steps=50,
   # logging_steps=50,
@@ -135,7 +151,11 @@ training_args = TrainingArguments(
   push_to_hub=False,              # do not push the model to the hub
   #report_to='tensorboard',        # report metrics to tensorboard
   load_best_model_at_end=True,    # load the best model at the end of training
+  report_to="wandb",
+  learning_rate=5e-05,
 )
+
+
 
 from transformers import Trainer
 
@@ -151,3 +171,14 @@ trainer = Trainer(
 
 # start training
 trainer.train()
+#trainer.save_model("path_to_save") 
+trainer.evaluate(dataset["test"])
+
+#trainer.save_model("./Modelle/cvt")
+"""
+  learning_rate=5e-05,
+  adam_beta1=0.9
+  adam_beta2=0.999
+  adam_epsilon=1e-08
+"""
+

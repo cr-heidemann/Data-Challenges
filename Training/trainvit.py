@@ -1,5 +1,5 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1" 
+os.environ["CUDA_VISIBLE_DEVICES"] = "2" 
 
 import torchvision
 from torchvision.transforms import ToTensor
@@ -8,6 +8,13 @@ from torchvision.transforms import ToTensor
 from roboflow import Roboflow
 rf = Roboflow(api_key="eCPQX5UVB0MToh5QML6k")
 project = rf.workspace("data-challenges").project("coins-yue2h")
+dataset = project.version(1).download("folder")
+
+"""
+
+from roboflow import Roboflow
+rf = Roboflow(api_key="UBtA5jfqIARNqDCcHb5P")
+project = rf.workspace("dc-qp5t2").project("dc-gua2a")
 dataset = project.version(1).download("folder")
 
 """
@@ -43,7 +50,7 @@ class ViTForImageClassification(nn.Module):
         else:
           return logits, None
 
-EPOCHS = 100
+EPOCHS = 50
 BATCH_SIZE = 16
 LEARNING_RATE = 2e-5
 
@@ -166,8 +173,8 @@ with torch.no_grad():
 
 
 
-MODEL_PATH = '/content/model1.pt'
+MODEL_PATH = 'model1.pt'
 model = torch.load(MODEL_PATH)
 model.eval()
-
+"""
 
